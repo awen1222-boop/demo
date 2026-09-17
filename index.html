@@ -465,15 +465,15 @@
     };
 
     // ==========================================
-    // Firebase 配置 (請在此替換成客戶的新 Firebase 專案配置)
+    // Firebase 配置 (已替換為新專案 fir-14fa0 金鑰)
     // ==========================================
     const firebaseConfig = {
-      apiKey: "AIzaSyANxYr_MF89rc3mocTMQBFxJ9pVuv8vU2Y",
-      authDomain: "house-78fc5.firebaseapp.com",
-      projectId: "house-78fc5",
-      storageBucket: "house-78fc5.firebasestorage.app",
-      messagingSenderId: "709172787551",
-      appId: "1:709172787551:web:dc56d7f0d4278cffbd9eea"
+      apiKey: "AIzaSyDMLKFDzpoQ3J1llHLEgEfagfM6SsJiV2I",
+      authDomain: "fir-14fa0.firebaseapp.com",
+      projectId: "fir-14fa0",
+      storageBucket: "fir-14fa0.firebasestorage.app",
+      messagingSenderId: "710477085062",
+      appId: "1:710477085062:web:390a986b99897fa1e51407"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -625,7 +625,6 @@
           const rData = dayData[roomKey] || { info: '', phone: '', price: '', payee: '未收' };
           const pVal = parseFloat(rData.price) || 0;
           
-          // 若舊資料是「未收款」自動對齊為「未收」
           let currentPayee = rData.payee || '未收';
           if (currentPayee === '未收款') currentPayee = '未收';
           if (currentPayee !== '已收') currentPayee = '未收';
@@ -877,7 +876,6 @@
           let curVal = '';
           const manualSaved = annualData[`m${m}_${cat}`];
 
-          // 將「支出8」作為預設連動明細的項目
           if (cat === '支出8') {
             const dynamicExp = expenseMonthlyTotals[m] || 0;
             if (dynamicExp > 0) curVal = dynamicExp;
