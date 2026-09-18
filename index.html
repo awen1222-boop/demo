@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
-  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.04.Demo</title>
+  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.05.Demo</title>
   
   <!-- 載入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -281,11 +281,11 @@
 </head>
 <body>
 
-  <!-- 頂部列：包含商業標題與展示版本號 -->
+  <!-- 頂部列 -->
   <div class="top-bar">
     <div class="title">
       🏡 民宿預約與財務管理系統 (範本) (可客製)
-      <span class="version-badge">V.260918.04.Demo</span>
+      <span class="version-badge">V.260918.05.Demo</span>
       <span id="syncStatus" class="status-badge">連線中...</span>
     </div>
   </div>
@@ -315,7 +315,7 @@
       <button class="branch-btn" id="btn-b3" onclick="switchBranch('b3')">🏠 民宿三館</button>
     </div>
 
-    <!-- 範本專用收款統計 -->
+    <!-- 收款統計 -->
     <div class="summary-banner">
       <span class="summary-banner-title">💰 本館當月收款統計：</span>
       <div class="summary-grid">
@@ -355,7 +355,7 @@
   <div id="tab-revenue" class="tab-content">
     <div class="controls">
       <label>年度選擇：
-        <select id="revenueYearPicker" onchange="loadRevenueYearData()" style="width:120px;">
+        <select id="revenueYearPicker" style="width:120px;">
           <option value="2025">2025</option>
           <option value="2026" selected>2026</option>
           <option value="2027">2027</option>
@@ -363,7 +363,7 @@
         </select>
       </label>
       <span style="font-size: 12.5px; color: #64748b;">
-        ※ 各館營收與支出皆獨立計算；「支出8」已全自動匯入支出明細表的對應館別。
+        ※ 各館營收與支出皆即時獨立連動計算。
       </span>
     </div>
 
@@ -401,19 +401,18 @@
     </div>
   </div>
 
-  <!-- 分頁 3: 每月支出明細 (館別取代人名) -->
+  <!-- 分頁 3: 每月支出明細 -->
   <div id="tab-expenses" class="tab-content">
     <div class="controls">
       <label>檢視月份：<input type="month" id="expenseMonthPicker" onchange="listenToMonthExpenses()"></label>
       <span style="font-size: 12.5px; color: #64748b;">
-        ※ 在此填寫的支出，將會自動對應扣除該「館別」在營收總表的帳目。
+        ※ 在此填寫的支出，將會自動即時對應扣除該「館別」在營收總表的帳目。
       </span>
     </div>
 
     <div class="common-form">
       <strong>➕ 新增一筆支出：</strong>
       <input type="date" id="expDate" required>
-      <!-- 改為一館、二館、三館 -->
       <select id="expPayer" required style="font-weight:600; color:#1e40af; width:110px;">
         <option value="一館">一館</option>
         <option value="二館">二館</option>
@@ -543,7 +542,13 @@
     let customRowHeights = {}; 
     let currentMonthExpenses = [];
     let accountsList = [];
-    let annualData = {};
+
+    // 即時連動快取變數
+    let cachedExpTotals = null;
+    let cachedAnnData = null;
+    let unsubscribeRevenueExp = null;
+    let unsubscribeRevenueAnn = null;
+
     let unsubscribeBookings = null;
     let unsubscribeExpenses = null;
     let unsubscribeAccounts = null;
@@ -571,7 +576,6 @@
       event.target.classList.add('active');
       document.getElementById(tabId).classList.add('active');
 
-      if (tabId === 'tab-revenue') loadRevenueYearData();
       if (tabId === 'tab-accounts') listenToAccounts();
     }
 
@@ -593,7 +597,12 @@
       currentRevBranch = branch;
       document.querySelectorAll('#rev-branch-tabs .branch-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById('btn-rev-' + branch).classList.add('active');
-      loadRevenueYearData();
+      
+      // 使用已在背景即時更新的快取資料重繪表格
+      if (cachedExpTotals && cachedAnnData) {
+        const year = document.getElementById('revenueYearPicker').value;
+        renderRevenueTable(year, cachedExpTotals, cachedAnnData);
+      }
     }
 
     const textareaObserver = new ResizeObserver(entries => {
@@ -857,6 +866,7 @@
               [currentBranch]: currentMonthBookings[date][currentBranch]
             }, { merge: true }).then(() => {
               setSyncStatus('雲端已同步', 'synced');
+              // 即時更新至年度財務總表 (會觸發 onSnapshot 即時重繪)
               const [y, m] = monthPickerVal.split('-').map(Number);
               const branchTotal = getBranchMonthlyRevenue(currentBranch);
               syncMonthRevenueToAnnual(y, m, currentBranch, branchTotal);
@@ -909,45 +919,63 @@
     }
 
     // ==========================================
-    // 2. 營收紀錄 (依館別計算)
+    // 2. 營收紀錄 (全雙工即時連動)
     // ==========================================
-    async function loadRevenueYearData() {
+    document.getElementById('revenueYearPicker').addEventListener('change', loadRevenueYearData);
+
+    function loadRevenueYearData() {
       const year = document.getElementById('revenueYearPicker').value;
       document.getElementById('revYearHeader').innerText = year;
       setSyncStatus(`彙整 ${year} 數據...`, 'syncing');
 
-      const expSnapshot = await db.collection('expenses')
+      if (unsubscribeRevenueExp) unsubscribeRevenueExp();
+      if (unsubscribeRevenueAnn) unsubscribeRevenueAnn();
+
+      cachedExpTotals = null;
+      cachedAnnData = null;
+
+      const checkAndRender = () => {
+        if (cachedExpTotals && cachedAnnData) {
+          renderRevenueTable(year, cachedExpTotals, cachedAnnData);
+          setSyncStatus('雲端已同步', 'synced');
+        }
+      };
+
+      // 建立年度支出明細即時監聽
+      unsubscribeRevenueExp = db.collection('expenses')
         .where('date', '>=', `${year}-01-01`)
         .where('date', '<=', `${year}-12-31`)
-        .get();
+        .onSnapshot(snapshot => {
+          const totals = { '一館': {}, '二館': {}, '三館': {} };
+          ['一館', '二館', '三館'].forEach(b => {
+            for (let m = 1; m <= 12; m++) {
+              totals[b][m] = {};
+              EXP_CATEGORIES.forEach(cat => totals[b][m][cat] = 0);
+            }
+          });
 
-      // 初始化依館別的支出容器
-      const expenseMonthlyTotals = { '一館': {}, '二館': {}, '三館': {} };
-      ['一館', '二館', '三館'].forEach(b => {
-        for (let m = 1; m <= 12; m++) {
-          expenseMonthlyTotals[b][m] = {};
-          EXP_CATEGORIES.forEach(cat => expenseMonthlyTotals[b][m][cat] = 0);
-        }
-      });
+          snapshot.forEach(doc => {
+            const item = doc.data();
+            if (item.date && item.payer && totals[item.payer]) {
+              const m = parseInt(item.date.split('-')[1], 10);
+              if (totals[item.payer][m][item.category] !== undefined) {
+                 totals[item.payer][m][item.category] += (parseFloat(item.amount) || 0);
+              }
+            }
+          });
+          cachedExpTotals = totals;
+          checkAndRender();
+        }, err => console.error("營收支出監聽錯誤", err));
 
-      expSnapshot.forEach(doc => {
-        const item = doc.data();
-        if (item.date && item.payer && expenseMonthlyTotals[item.payer]) {
-          const m = parseInt(item.date.split('-')[1], 10);
-          if (expenseMonthlyTotals[item.payer][m][item.category] !== undefined) {
-             expenseMonthlyTotals[item.payer][m][item.category] += (parseFloat(item.amount) || 0);
-          }
-        }
-      });
-
-      const doc = await db.collection('annual_finance').doc(year).get();
-      annualData = doc.exists ? doc.data() : {};
-
-      renderRevenueTable(year, expenseMonthlyTotals);
-      setSyncStatus('雲端已同步', 'synced');
+      // 建立年度營收(訂房總和)即時監聽
+      unsubscribeRevenueAnn = db.collection('annual_finance').doc(String(year))
+        .onSnapshot(doc => {
+          cachedAnnData = doc.exists ? doc.data() : {};
+          checkAndRender();
+        }, err => console.error("營收年度監聽錯誤", err));
     }
 
-    function renderRevenueTable(year, expenseMonthlyTotals) {
+    function renderRevenueTable(year, expenseMonthlyTotals, annualDataObj) {
       const tbody = document.getElementById('revenueTableBody');
       tbody.innerHTML = '';
 
@@ -964,7 +992,7 @@
         tdMonth.innerHTML = `<span class="month-badge">${m}月</span>`;
         tr.appendChild(tdMonth);
 
-        const revVal = parseFloat(annualData[`${currentRevBranch}_m${m}_revenue`]) || 0;
+        const revVal = parseFloat(annualDataObj[`${currentRevBranch}_m${m}_revenue`]) || 0;
         colTotals.revenue += revVal;
 
         const tdRev = document.createElement('td');
@@ -979,7 +1007,7 @@
         let monthTotalExp = 0;
         EXP_CATEGORIES.forEach((cat) => {
           let curVal = '';
-          const manualSaved = annualData[`${currentRevBranch}_m${m}_${cat}`];
+          const manualSaved = annualDataObj[`${currentRevBranch}_m${m}_${cat}`];
           const dynamicExp = expenseMonthlyTotals[payerName][m][cat] || 0;
 
           if (cat === '支出8') {
@@ -1040,14 +1068,11 @@
 
     function updateFinanceCell(year, fieldKey, value) {
       const numVal = value === '' ? '' : parseFloat(value);
-      annualData[fieldKey] = numVal;
-
       setSyncStatus('儲存中...', 'syncing');
-      db.collection('annual_finance').doc(year).set({
+      db.collection('annual_finance').doc(String(year)).set({
         [fieldKey]: numVal
       }, { merge: true }).then(() => {
         setSyncStatus('雲端已同步', 'synced');
-        loadRevenueYearData();
       });
     }
 
@@ -1132,11 +1157,6 @@
         document.getElementById('expAmount').value = '';
         document.getElementById('expNote').value = '';
         setSyncStatus('雲端已同步', 'synced');
-        
-        const year = date.slice(0, 4);
-        if (document.getElementById('revenueYearPicker').value === year) {
-          loadRevenueYearData(); 
-        }
       }).catch(err => {
         alert('新增支出失敗：' + err.message);
       });
@@ -1144,9 +1164,7 @@
 
     function deleteExpense(id) {
       if (confirm('確定要刪除這筆支出紀錄嗎？')) {
-        db.collection('expenses').doc(id).delete().then(() => {
-          loadRevenueYearData();
-        });
+        db.collection('expenses').doc(id).delete();
       }
     }
 
@@ -1295,7 +1313,7 @@
         const wsAccounts = XLSX.utils.aoa_to_sheet(accRows);
         XLSX.utils.book_append_sheet(wb, wsAccounts, "設備帳密");
 
-        const fileName = `民宿管理資料_範本_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const fileName = `民宿管理資料_V260918.05.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, fileName);
         setSyncStatus('雲端已同步', 'synced');
       } catch (err) {
@@ -1307,10 +1325,11 @@
 
     document.getElementById('bookingMonthPicker').addEventListener('change', listenToBookings);
 
-    // 啟動監聽
+    // ★ 啟動全雙工即時監聽
     listenToRoomSettings();
     listenToBookings();
     listenToMonthExpenses();
+    loadRevenueYearData(); 
   </script>
 </body>
 </html>
