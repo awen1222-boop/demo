@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
-  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.06.Demo</title>
+  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.07.Demo</title>
   
   <!-- 載入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -287,7 +287,7 @@
   <div class="top-bar">
     <div class="title">
       🏡 民宿預約與財務管理系統 (範本) (可客製)
-      <span class="version-badge">V.260918.06.Demo</span>
+      <span class="version-badge">V.260918.07.Demo</span>
       <span id="syncStatus" class="status-badge">連線中...</span>
     </div>
   </div>
@@ -381,7 +381,7 @@
         <thead>
           <tr>
             <th class="freeze-left" id="revYearHeader" style="width: 55px;">2026</th>
-            <th class="th-major-col">本館營收</th>
+            <th class="th-major-col" id="th-revenue-title">一館營收</th>
             <th class="th-exp-col">支出1</th>
             <th class="th-exp-col">支出2</th>
             <th class="th-exp-col">支出3</th>
@@ -600,6 +600,9 @@
       document.querySelectorAll('#rev-branch-tabs .branch-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById('btn-rev-' + branch).classList.add('active');
       
+      // 動態更新營收總表的表頭文字
+      document.getElementById('th-revenue-title').innerText = `${branchPayerMap[branch]}營收`;
+      
       if (cachedExpTotals && cachedAnnData) {
         const year = document.getElementById('revenueYearPicker').value;
         renderRevenueTable(year, cachedExpTotals, cachedAnnData);
@@ -666,7 +669,29 @@
         .onSnapshot(snapshot => {
           currentMonthBookings = {};
           snapshot.forEach(doc => { currentMonthBookings[doc.id] = doc.data(); });
+          
           renderBookingTable();
+          
+          // ★ 舊資料自我修復機制：只要切換月份，就在背景把當月三館的營收全加總，強制同步到年度財報中
+          const [y, m] = monthVal.split('-').map(Number);
+          let sums = { b1: 0, b2: 0, b3: 0 };
+          for (let date in currentMonthBookings) {
+            let dayData = currentMonthBookings[date];
+            if (dayData.r1 && !dayData.b1) dayData.b1 = { r1: dayData.r1, r2: dayData.r2, r3: dayData.r3, r4: dayData.r4, r5: dayData.r5 };
+            ['b1', 'b2', 'b3'].forEach(b => {
+              if (dayData[b]) {
+                for (let r = 1; r <= 5; r++) {
+                  sums[b] += parseFloat(dayData[b][`r${r}`]?.price) || 0;
+                }
+              }
+            });
+          }
+          db.collection('annual_finance').doc(String(y)).set({
+            [`b1_m${m}_revenue`]: sums.b1,
+            [`b2_m${m}_revenue`]: sums.b2,
+            [`b3_m${m}_revenue`]: sums.b3
+          }, { merge: true });
+
           setSyncStatus('雲端已同步', 'synced');
         }, err => {
           console.error(err);
@@ -866,11 +891,8 @@
               month: monthPickerVal,
               [currentBranch]: currentMonthBookings[date][currentBranch]
             }, { merge: true }).then(() => {
+              // 存檔成功後，會再次觸發 onSnapshot，達成 100% 完美的自我修復與計算
               setSyncStatus('雲端已同步', 'synced');
-              // 即時更新至年度財務總表 (會觸發 onSnapshot 即時重繪)
-              const [y, m] = monthPickerVal.split('-').map(Number);
-              const branchTotal = getBranchMonthlyRevenue(currentBranch);
-              syncMonthRevenueToAnnual(y, m, currentBranch, branchTotal);
             });
           }, 500);
         });
@@ -899,28 +921,8 @@
       document.getElementById('sumUnpaid').innerText = payees['未收'].toLocaleString();
     }
 
-    function getBranchMonthlyRevenue(targetBranch) {
-      let total = 0;
-      for (let date in currentMonthBookings) {
-         let dayData = currentMonthBookings[date];
-         if (dayData.r1 && !dayData.b1) dayData.b1 = {r1: dayData.r1, r2: dayData.r2, r3: dayData.r3, r4: dayData.r4, r5: dayData.r5};
-         if (dayData[targetBranch]) {
-           for(let r=1; r<=5; r++){
-             total += parseFloat(dayData[targetBranch][`r${r}`]?.price) || 0;
-           }
-         }
-      }
-      return total;
-    }
-
-    function syncMonthRevenueToAnnual(year, month, branch, amount) {
-      db.collection('annual_finance').doc(String(year)).set({
-        [`${branch}_m${month}_revenue`]: amount
-      }, { merge: true });
-    }
-
     // ==========================================
-    // 2. 營收紀錄 (全雙工即時連動 - 唯讀模式)
+    // 2. 營收紀錄 (全雙工即時連動 - 100% 唯讀模式)
     // ==========================================
     document.getElementById('revenueYearPicker').addEventListener('change', loadRevenueYearData);
 
@@ -996,7 +998,7 @@
         const revVal = parseFloat(annualDataObj[`${currentRevBranch}_m${m}_revenue`]) || 0;
         colTotals.revenue += revVal;
 
-        // ★ 營收欄位 - 設為唯讀
+        // ★ 營收欄位 - 強制唯讀
         const tdRev = document.createElement('td');
         tdRev.className = 'td-major-col';
         tdRev.innerHTML = `
@@ -1005,21 +1007,30 @@
         `;
         tr.appendChild(tdRev);
 
-        // ★ 支出 1~9 欄位 - 全部從明細匯入，設為唯讀
+        // ★ 支出 1~9 欄位 - 全部從支出明細表自動抓取，強制唯讀
         let monthTotalExp = 0;
         EXP_CATEGORIES.forEach((cat) => {
+          let curVal = '';
+          const manualSaved = annualDataObj[`${currentRevBranch}_m${m}_${cat}`];
           const dynamicExp = expenseMonthlyTotals[payerName][m][cat] || 0;
-          let curVal = dynamicExp > 0 ? dynamicExp : '';
 
-          monthTotalExp += dynamicExp;
-          colTotals[cat] += dynamicExp;
+          if (dynamicExp > 0) {
+            curVal = dynamicExp;
+          } else if (manualSaved !== undefined) {
+            // 保留舊資料相容性
+            curVal = manualSaved;
+          }
+
+          const numVal = parseFloat(curVal) || 0;
+          monthTotalExp += numVal;
+          colTotals[cat] += numVal;
 
           const tdCat = document.createElement('td');
           tdCat.className = 'td-exp-col';
           const isCalculated = dynamicExp > 0;
           tdCat.innerHTML = `
             <input type="number" class="table-input" style="${isCalculated ? 'color:#b91c1c; font-weight:bold;' : 'color:#cbd5e1;'} cursor:not-allowed;"
-                   value="${curVal}" placeholder="-" readonly>
+                   value="${curVal !== '' ? curVal : ''}" placeholder="-" readonly>
           `;
           tr.appendChild(tdCat);
         });
@@ -1295,7 +1306,7 @@
         const wsAccounts = XLSX.utils.aoa_to_sheet(accRows);
         XLSX.utils.book_append_sheet(wb, wsAccounts, "設備帳密");
 
-        const fileName = `民宿管理資料_V260918.06.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const fileName = `民宿管理資料_V260918.07.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, fileName);
         setSyncStatus('雲端已同步', 'synced');
       } catch (err) {
