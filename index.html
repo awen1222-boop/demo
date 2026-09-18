@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
-  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.07.Demo</title>
+  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.08.Demo</title>
   
   <!-- 載入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -259,10 +259,7 @@
     }
     .month-badge { background-color: #22c55e; color: white; font-weight: bold; padding: 3px 6px; border-radius: 3px; display: inline-block; }
     .table-input { width: 100%; border: 1px solid transparent; padding: 4px 2px; text-align: right; box-sizing: border-box; font-size: 13px; background: transparent; }
-    
-    /* 唯讀輸入框不顯示外框變化 */
     .table-input[readonly]:focus { outline: none; border-color: transparent; }
-    
     .cell-surplus { font-weight: bold; color: #1e3a8a; }
     .cell-surplus.negative { color: #dc2626; }
 
@@ -271,6 +268,69 @@
     .btn-copy { color: #0284c7; border: 1px solid #bae6fd; background: #f0f9ff; padding: 4px 8px; font-size: 12px; border-radius: 3px; }
 
     .common-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: white; padding: 12px 16px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+
+    /* 教學分頁專用樣式 */
+    .tutorial-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    .tutorial-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .tutorial-header {
+      background: #f1f5f9;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #1e293b;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tutorial-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .tutorial-body { flex-direction: row; }
+      .tutorial-text { flex: 1; }
+      .tutorial-img { flex: 1; display: flex; justify-content: center; align-items: center; }
+    }
+    .tutorial-text ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .tutorial-text li { margin-bottom: 8px; }
+    .img-placeholder {
+      background: #e2e8f0;
+      border: 2px dashed #94a3b8;
+      border-radius: 6px;
+      width: 100%;
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .img-placeholder img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+    }
 
     @media (max-width: 650px) {
       .common-form { flex-direction: column; align-items: stretch; }
@@ -286,18 +346,19 @@
   <!-- 頂部列 -->
   <div class="top-bar">
     <div class="title">
-      🏡 民宿預約與財務管理系統 (範本) (可客製)
-      <span class="version-badge">V.260918.07.Demo</span>
+      🏡 民宿預約與財務管理系統 (範本)
+      <span class="version-badge">V.260918.08.Demo</span>
       <span id="syncStatus" class="status-badge">連線中...</span>
     </div>
   </div>
 
-  <!-- 分頁選單 -->
+  <!-- 分頁選單 (新增系統教學) -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('tab-bookings')">📅 訂房紀錄</button>
     <button class="tab-btn" onclick="switchTab('tab-revenue')">📊 營收總表</button>
     <button class="tab-btn" onclick="switchTab('tab-expenses')">💸 支出明細</button>
     <button class="tab-btn" onclick="switchTab('tab-accounts')">🔐 設備帳密</button>
+    <button class="tab-btn" onclick="switchTab('tab-tutorial')" style="background:#dbeafe; color:#1d4ed8; border-bottom: 2px solid #2563eb;">📖 系統教學</button>
   </div>
 
   <!-- 分頁 1: 訂房紀錄 -->
@@ -310,14 +371,12 @@
       </div>
     </div>
 
-    <!-- 訂房紀錄：多館別切換按鈕 -->
     <div class="branch-tabs" id="booking-branch-tabs">
       <button class="branch-btn active" id="btn-b1" onclick="switchBranch('b1')">🏠 民宿一館</button>
       <button class="branch-btn" id="btn-b2" onclick="switchBranch('b2')">🏠 民宿二館</button>
       <button class="branch-btn" id="btn-b3" onclick="switchBranch('b3')">🏠 民宿三館</button>
     </div>
 
-    <!-- 收款統計 -->
     <div class="summary-banner">
       <span class="summary-banner-title">💰 本館當月收款統計：</span>
       <div class="summary-grid">
@@ -369,7 +428,6 @@
       </span>
     </div>
 
-    <!-- 營收總表：多館別切換按鈕 -->
     <div class="branch-tabs" id="rev-branch-tabs">
       <button class="branch-btn active" id="btn-rev-b1" onclick="switchRevBranch('b1')">🏠 一館財報</button>
       <button class="branch-btn" id="btn-rev-b2" onclick="switchRevBranch('b2')">🏠 二館財報</button>
@@ -403,7 +461,7 @@
     </div>
   </div>
 
-  <!-- 分頁 3: 每月支出明細 (館別取代人名) -->
+  <!-- 分頁 3: 每月支出明細 -->
   <div id="tab-expenses" class="tab-content">
     <div class="controls">
       <label>檢視月份：<input type="month" id="expenseMonthPicker" onchange="listenToMonthExpenses()"></label>
@@ -497,6 +555,79 @@
     </div>
   </div>
 
+  <!-- 分頁 5: 系統教學 (圖文版) -->
+  <div id="tab-tutorial" class="tab-content">
+    <div class="tutorial-container">
+      
+      <div class="tutorial-card">
+        <div class="tutorial-header">📅 訂房紀錄與多館別管理</div>
+        <div class="tutorial-body">
+          <div class="tutorial-text">
+            <ul>
+              <li><strong>防呆視覺化：</strong>當天的日期整行會自動標記為<span style="background:#fef08a; padding:0 4px; border-radius:3px;">醒目黃色</span>，客名填寫後該格會顯示紅框，方便前台秒速找房。</li>
+              <li><strong>多館獨立操作：</strong>點選上方「一館 / 二館 / 三館」按鈕，房況與表頭名稱會瞬間切換。點擊表頭的「✏️」即可自訂該館專屬房型名稱。</li>
+              <li><strong>一鍵關房：</strong>點擊右側的「關房」按鈕，即可將當日該館尚未售出的空房全部填上「關房中」。</li>
+              <li><strong>收款統計：</strong>左上方會即時幫您算出目前畫面中，該館當月「已收」與「未收」的總金額。</li>
+            </ul>
+          </div>
+          <div class="tutorial-img">
+            <!-- 若您未來有截圖，可將下方文字替換為：<img src="您的圖片網址.jpg"> -->
+            <div class="img-placeholder">📸 預留截圖位置 (訂房紀錄介面)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-card">
+        <div class="tutorial-header">📊 營收總表 (100% 唯讀防呆)</div>
+        <div class="tutorial-body">
+          <div class="tutorial-text">
+            <ul>
+              <li><strong>全自動結算：</strong>為了確保帳目精準，本分頁設定為「完全唯讀」。所有數字皆由系統後台 24 小時自動抓取計算。</li>
+              <li><strong>獨立財報：</strong>點選「一館財報 / 二館財報」，系統會分別為您調出該館專屬的 1~12 月營收與支出。</li>
+              <li><strong>結餘公式：</strong>每月的「結餘」= 本館總營收 (抓取自訂房紀錄) 扣除 本館總支出 (抓取自支出明細)。</li>
+            </ul>
+          </div>
+          <div class="tutorial-img">
+            <div class="img-placeholder">📸 預留截圖位置 (營收總表介面)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-card">
+        <div class="tutorial-header">💸 支出明細與自動扣帳</div>
+        <div class="tutorial-body">
+          <div class="tutorial-text">
+            <ul>
+              <li><strong>指定館別支出：</strong>新增支出時，請在下拉選單選擇「一館、二館或三館」。這筆錢將會自動同步並扣除該館在「營收總表」內的營利。</li>
+              <li><strong>九大支出分類：</strong>提供「支出1 ~ 支出9」供您自訂。</li>
+              <li><strong>底部獨立統計：</strong>列表最下方會自動將當月「一館、二館、三館」的總花費分別加總，對帳一目了然。</li>
+            </ul>
+          </div>
+          <div class="tutorial-img">
+             <div class="img-placeholder">📸 預留截圖位置 (支出明細介面)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-card">
+        <div class="tutorial-header">💾 資料匯出與每日自動備份</div>
+        <div class="tutorial-body">
+          <div class="tutorial-text">
+            <ul>
+              <li><strong>手動一鍵匯出：</strong>點擊上方的「📊 匯出 Excel 報表」，系統會將訂單、支出、帳密分別打包進同一個 Excel 檔案的不同工作表 (Sheet) 中。</li>
+              <li><strong>館別對帳欄位：</strong>匯出的訂房明細中，會自動新增「館別」欄位（一館/二館/三館），方便會計人員透過 Excel 篩選器對帳。</li>
+              <li><strong>雲端自動排程寄件：</strong>可額外掛載 Google Apps Script，設定每天 23:59 全自動把最新報表打包，無聲無息寄到老闆的信箱做異地備份。</li>
+            </ul>
+          </div>
+          <div class="tutorial-img">
+            <div class="img-placeholder">📸 預留截圖位置 (Excel 報表範例)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <script>
     const TAIWAN_HOLIDAYS = {
       "2025-01-01": "元旦", "2025-01-27": "春節調整", "2025-01-28": "除夕", "2025-01-29": "春節", "2025-01-30": "初二", "2025-01-31": "初三",
@@ -579,6 +710,7 @@
       document.getElementById(tabId).classList.add('active');
 
       if (tabId === 'tab-accounts') listenToAccounts();
+      if (tabId === 'tab-revenue') loadRevenueYearData();
     }
 
     // 訂房紀錄切換分館
@@ -600,7 +732,6 @@
       document.querySelectorAll('#rev-branch-tabs .branch-btn').forEach(btn => btn.classList.remove('active'));
       document.getElementById('btn-rev-' + branch).classList.add('active');
       
-      // 動態更新營收總表的表頭文字
       document.getElementById('th-revenue-title').innerText = `${branchPayerMap[branch]}營收`;
       
       if (cachedExpTotals && cachedAnnData) {
@@ -672,7 +803,6 @@
           
           renderBookingTable();
           
-          // ★ 舊資料自我修復機制：只要切換月份，就在背景把當月三館的營收全加總，強制同步到年度財報中
           const [y, m] = monthVal.split('-').map(Number);
           let sums = { b1: 0, b2: 0, b3: 0 };
           for (let date in currentMonthBookings) {
@@ -891,7 +1021,6 @@
               month: monthPickerVal,
               [currentBranch]: currentMonthBookings[date][currentBranch]
             }, { merge: true }).then(() => {
-              // 存檔成功後，會再次觸發 onSnapshot，達成 100% 完美的自我修復與計算
               setSyncStatus('雲端已同步', 'synced');
             });
           }, 500);
@@ -944,7 +1073,6 @@
         }
       };
 
-      // 建立年度支出明細即時監聽
       unsubscribeRevenueExp = db.collection('expenses')
         .where('date', '>=', `${year}-01-01`)
         .where('date', '<=', `${year}-12-31`)
@@ -970,7 +1098,6 @@
           checkAndRender();
         }, err => console.error("營收支出監聽錯誤", err));
 
-      // 建立年度營收即時監聽
       unsubscribeRevenueAnn = db.collection('annual_finance').doc(String(year))
         .onSnapshot(doc => {
           cachedAnnData = doc.exists ? doc.data() : {};
@@ -998,7 +1125,6 @@
         const revVal = parseFloat(annualDataObj[`${currentRevBranch}_m${m}_revenue`]) || 0;
         colTotals.revenue += revVal;
 
-        // ★ 營收欄位 - 強制唯讀
         const tdRev = document.createElement('td');
         tdRev.className = 'td-major-col';
         tdRev.innerHTML = `
@@ -1007,7 +1133,6 @@
         `;
         tr.appendChild(tdRev);
 
-        // ★ 支出 1~9 欄位 - 全部從支出明細表自動抓取，強制唯讀
         let monthTotalExp = 0;
         EXP_CATEGORIES.forEach((cat) => {
           let curVal = '';
@@ -1017,7 +1142,6 @@
           if (dynamicExp > 0) {
             curVal = dynamicExp;
           } else if (manualSaved !== undefined) {
-            // 保留舊資料相容性
             curVal = manualSaved;
           }
 
@@ -1306,7 +1430,7 @@
         const wsAccounts = XLSX.utils.aoa_to_sheet(accRows);
         XLSX.utils.book_append_sheet(wb, wsAccounts, "設備帳密");
 
-        const fileName = `民宿管理資料_V260918.07.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const fileName = `民宿管理資料_V260918.08.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, fileName);
         setSyncStatus('雲端已同步', 'synced');
       } catch (err) {
