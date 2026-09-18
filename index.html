@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
-  <title>民宿預約與財務管理系統 (範本) (可客製) V.260917.Demo</title>
+  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.03.Demo</title>
   
   <!-- 載入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -62,7 +62,7 @@
     .tab-bar {
       display: flex;
       gap: 8px;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 4px;
       overflow-x: auto;
@@ -87,11 +87,36 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
+    /* 多館別切換按鈕 */
+    .branch-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .branch-btn {
+      padding: 6px 14px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      transition: all 0.2s;
+    }
+    .branch-btn.active {
+      background: #059669;
+      color: white;
+      border-color: #047857;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
     .controls {
       display: flex;
       gap: 10px;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
     button, input, select {
@@ -220,7 +245,7 @@
     }
     .btn-close-room:hover { background: #334155; }
 
-    /* 營收總表特定樣式 (縮窄各別支出欄位，不大於總支出與結餘) */
+    /* 營收總表特定樣式 (縮窄各別支出欄位) */
     .revenue-table th { background-color: #dbeafe !important; white-space: nowrap; }
     .revenue-table .freeze-left { background-color: #f1f5f9; }
     .revenue-table .th-exp-col, .revenue-table .td-exp-col {
@@ -245,7 +270,6 @@
 
     .common-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: white; padding: 12px 16px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 15px; }
 
-    /* 手機版 RWD 優化 */
     @media (max-width: 650px) {
       .common-form { flex-direction: column; align-items: stretch; }
       .common-form strong { margin-bottom: 4px; }
@@ -261,7 +285,7 @@
   <div class="top-bar">
     <div class="title">
       🏡 民宿預約與財務管理系統 (範本) (可客製)
-      <span class="version-badge">V.260917.Demo</span>
+      <span class="version-badge">V.260918.03.Demo</span>
       <span id="syncStatus" class="status-badge">連線中...</span>
     </div>
   </div>
@@ -284,9 +308,16 @@
       </div>
     </div>
 
-    <!-- 範本專用收款統計：已收 (藍色) / 未收 (白色) -->
+    <!-- ★ 新增：多館別切換按鈕 -->
+    <div class="branch-tabs">
+      <button class="branch-btn active" id="btn-b1" onclick="switchBranch('b1')">🏠 民宿一館</button>
+      <button class="branch-btn" id="btn-b2" onclick="switchBranch('b2')">🏠 民宿二館</button>
+      <button class="branch-btn" id="btn-b3" onclick="switchBranch('b3')">🏠 民宿三館</button>
+    </div>
+
+    <!-- 範本專用收款統計 -->
     <div class="summary-banner">
-      <span class="summary-banner-title">💰 本月收款統計：</span>
+      <span class="summary-banner-title">💰 本館當月收款統計：</span>
       <div class="summary-grid">
         <span class="summary-item" style="color:#2563eb; background:#dbeafe; border-color:#93c5fd;">已收：<span id="sumPaid">0</span> 元</span>
         <span class="summary-item" style="color:#64748b; background:#ffffff; border-color:#cbd5e1;">未收：<span id="sumUnpaid">0</span> 元</span>
@@ -310,7 +341,7 @@
         <tbody id="bookingTableBody"></tbody>
         <tfoot>
           <tr style="background:#f1f5f9; font-weight:bold;">
-            <td class="freeze-left" style="background:#e2e8f0;">全月總營收</td>
+            <td class="freeze-left" style="background:#e2e8f0;">本館月營收</td>
             <td colspan="5"></td>
             <td id="bookingGrandTotal" style="color:#b91c1c; font-size:16px;">0</td>
             <td></td>
@@ -320,7 +351,7 @@
     </div>
   </div>
 
-  <!-- 分頁 2: 營收紀錄 (欄位縮窄優化) -->
+  <!-- 分頁 2: 營收紀錄 -->
   <div id="tab-revenue" class="tab-content">
     <div class="controls">
       <label>年度選擇：
@@ -332,7 +363,7 @@
         </select>
       </label>
       <span style="font-size: 12.5px; color: #64748b;">
-        ※ 結餘 = 營收 - 總支出；「支出8」已全自動匯入支出明細表的三人總和 (所有項目名稱皆可客製變更)。
+        ※ 結餘 = (一館+二館+三館 總營收) - 總支出；「支出8」已全自動匯入支出明細表的三人總和。
       </span>
     </div>
 
@@ -363,7 +394,7 @@
     </div>
   </div>
 
-  <!-- 分頁 3: 每月支出明細 (小叮噹 / 大雄 / 技安 & 總計明細) -->
+  <!-- 分頁 3: 每月支出明細 -->
   <div id="tab-expenses" class="tab-content">
     <div class="controls">
       <label>檢視月份：<input type="month" id="expenseMonthPicker" onchange="listenToMonthExpenses()"></label>
@@ -458,9 +489,6 @@
   </div>
 
   <script>
-    // ==========================================
-    // 國定假日清單 (涵蓋 2025、2026、2027)
-    // ==========================================
     const TAIWAN_HOLIDAYS = {
       "2025-01-01": "元旦", "2025-01-27": "春節調整", "2025-01-28": "除夕", "2025-01-29": "春節", "2025-01-30": "初二", "2025-01-31": "初三",
       "2025-02-28": "和平紀念日", "2025-04-03": "兒童節補假", "2025-04-04": "兒童清明", "2025-05-01": "勞動節",
@@ -477,9 +505,7 @@
       "2027-05-01": "勞動節", "2027-06-09": "端午節", "2027-09-15": "中秋節", "2027-10-10": "國慶日", "2027-10-11": "國慶補假"
     };
 
-    // ==========================================
     // Firebase 配置 (展示專用專案 fir-14fa0)
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyDMLKFDzpoQ3J1llHLEgEfagfM6SsJiV2I",
       authDomain: "fir-14fa0.firebaseapp.com",
@@ -494,7 +520,17 @@
 
     const EXP_CATEGORIES = ['支出1', '支出2', '支出3', '支出4', '支出5', '支出6', '支出7', '支出8', '支出9'];
 
-    let roomNames = ['202 雙人房', '302 雙人房', '201 四人房', '301 四人房', '401 四人房'];
+    // 館別變數
+    let currentBranch = 'b1'; 
+    const branchTitles = { 'b1': '一館', 'b2': '二館', 'b3': '三館' };
+
+    // 多館房型名稱結構
+    let roomNames = {
+      b1: ['一館 202 雙人房', '一館 302 雙人房', '一館 201 四人房', '一館 301 四人房', '一館 401 四人房'],
+      b2: ['二館 202 雙人房', '二館 302 雙人房', '二館 201 四人房', '二館 301 四人房', '二館 401 四人房'],
+      b3: ['三館 202 雙人房', '三館 302 雙人房', '三館 201 四人房', '三館 301 四人房', '三館 401 四人房']
+    };
+
     let currentMonthBookings = {};
     let customRowHeights = {}; 
     let currentMonthExpenses = [];
@@ -507,8 +543,6 @@
     const today = new Date();
     const curYear = today.getFullYear();
     const curMonthStr = `${curYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    
-    // 計算「今天」的日期字串 (YYYY-MM-DD)
     const localTodayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     document.getElementById('bookingMonthPicker').value = curMonthStr;
@@ -533,17 +567,28 @@
       if (tabId === 'tab-accounts') listenToAccounts();
     }
 
+    // 切換分館
+    function switchBranch(branch) {
+      currentBranch = branch;
+      document.querySelectorAll('.branch-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-' + branch).classList.add('active');
+      
+      // 更新表頭的房型名稱
+      for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById(`th-room${i}`);
+        if (el) el.innerText = `${roomNames[currentBranch][i - 1]} ✏️`;
+      }
+      renderBookingTable();
+    }
+
     const textareaObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
         const target = entry.target;
         if (!target.style.height) continue;
-        
         const date = target.dataset.date;
         const newHeight = target.style.height;
-        
         if (customRowHeights[date] === newHeight) continue;
         customRowHeights[date] = newHeight;
-        
         const tr = target.closest('tr');
         if (tr) {
           const allTextareas = tr.querySelectorAll('.input-info');
@@ -564,19 +609,26 @@
     // ==========================================
     function listenToRoomSettings() {
       db.collection('settings').doc('rooms').onSnapshot(doc => {
-        if (doc.exists && doc.data().names) roomNames = doc.data().names;
+        if (doc.exists) {
+          if (doc.data().branches) {
+            roomNames = Object.assign(roomNames, doc.data().branches);
+          } else if (doc.data().names) {
+            // 舊版資料相容
+            roomNames.b1 = doc.data().names;
+          }
+        }
         for (let i = 1; i <= 5; i++) {
           const el = document.getElementById(`th-room${i}`);
-          if (el) el.innerText = `${roomNames[i - 1]} ✏️`;
+          if (el) el.innerText = `${roomNames[currentBranch][i - 1]} ✏️`;
         }
       });
     }
 
     function renameRoom(index) {
-      const newName = prompt('請輸入新的房間名稱：', roomNames[index - 1]);
+      const newName = prompt('請輸入新的房間名稱：', roomNames[currentBranch][index - 1]);
       if (newName && newName.trim() !== '') {
-        roomNames[index - 1] = newName.trim();
-        db.collection('settings').doc('rooms').set({ names: roomNames });
+        roomNames[currentBranch][index - 1] = newName.trim();
+        db.collection('settings').doc('rooms').set({ branches: roomNames }, { merge: true });
       }
     }
 
@@ -602,12 +654,12 @@
       const [year, month] = document.getElementById('bookingMonthPicker').value.split('-').map(Number);
       const daysCount = new Date(year, month, 0).getDate();
       const tbody = document.getElementById('bookingTableBody');
-      const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
       const activeElId = document.activeElement ? document.activeElement.id : null;
+      const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
 
       tbody.innerHTML = '';
-      let totalMonthRevenue = 0;
-      let payeeTotals = { '已收': 0, '未收': 0 };
+      let branchMonthRevenue = 0;
+      let branchPayeeTotals = { '已收': 0, '未收': 0 };
 
       for (let day = 1; day <= daysCount; day++) {
         const dStr = String(day).padStart(2, '0');
@@ -616,17 +668,20 @@
         const dayOfWeek = new Date(year, month - 1, day).getDay();
         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
         const holidayName = TAIWAN_HOLIDAYS[dateKey];
-        const dayData = currentMonthBookings[dateKey] || {};
-
-        let rowTotal = 0;
-        const tr = document.createElement('tr');
-
-        // 當天欄位標記 (黃色高亮)
-        if (dateKey === localTodayString) {
-          tr.classList.add('today-row');
+        
+        let dayData = currentMonthBookings[dateKey] || {};
+        
+        // 舊版單館資料相容處理
+        if (dayData.r1 && !dayData.b1) {
+          dayData.b1 = { r1: dayData.r1, r2: dayData.r2, r3: dayData.r3, r4: dayData.r4, r5: dayData.r5 };
         }
+        
+        let branchData = dayData[currentBranch] || {};
+        let rowTotal = 0;
+        
+        const tr = document.createElement('tr');
+        if (dateKey === localTodayString) tr.classList.add('today-row');
 
-        // 日期欄
         const tdDate = document.createElement('td');
         let dateClass = 'date-col freeze-left';
         if (holidayName) dateClass += ' holiday';
@@ -638,36 +693,29 @@
         tdDate.innerHTML = dateHtml;
         tr.appendChild(tdDate);
 
-        // 房型
         for (let r = 1; r <= 5; r++) {
           const roomKey = `r${r}`;
-          const rData = dayData[roomKey] || { info: '', phone: '', price: '', payee: '未收' };
+          const rData = branchData[roomKey] || { info: '', phone: '', price: '', payee: '未收' };
           const pVal = parseFloat(rData.price) || 0;
           
           let currentPayee = rData.payee || '未收';
           if (currentPayee === '未收款') currentPayee = '未收';
           if (currentPayee !== '已收') currentPayee = '未收';
 
-          const currentPayeeClass = getPayeeClass(currentPayee);
-
           rowTotal += pVal;
           if (pVal > 0) {
-            if (currentPayee === '已收') payeeTotals['已收'] += pVal;
-            else payeeTotals['未收'] += pVal;
+            if (currentPayee === '已收') branchPayeeTotals['已收'] += pVal;
+            else branchPayeeTotals['未收'] += pVal;
           }
 
           const tdRoom = document.createElement('td');
-          
           let roomClass = r <= 2 ? 'room-col room-double-td' : 'room-col room-quad-td';
-          if ((rData.info || '').trim().length > 0) {
-            roomClass += ' booked-cell';
-          }
+          if ((rData.info || '').trim().length > 0) roomClass += ' booked-cell';
           tdRoom.className = roomClass;
 
           const iId = `info-${dateKey}-${roomKey}`;
           const phId = `phone-${dateKey}-${roomKey}`;
           const pId = `price-${dateKey}-${roomKey}`;
-          
           const savedHeight = customRowHeights[dateKey] ? `height: ${customRowHeights[dateKey]};` : '';
 
           tdRoom.innerHTML = `
@@ -676,7 +724,7 @@
               <input id="${phId}" type="text" class="input-phone" placeholder="電話號碼" value="${rData.phone || ''}" data-date="${dateKey}" data-room="${roomKey}" data-field="phone">
               <div class="price-row">
                 <input id="${pId}" type="number" class="input-price" placeholder="金額" value="${rData.price || ''}" data-date="${dateKey}" data-room="${roomKey}" data-field="price">
-                <select class="select-payee ${currentPayeeClass}" data-date="${dateKey}" data-room="${roomKey}" data-field="payee">
+                <select class="select-payee ${getPayeeClass(currentPayee)}" data-date="${dateKey}" data-room="${roomKey}" data-field="payee">
                   <option value="未收" ${currentPayee === '未收' ? 'selected' : ''}>未收</option>
                   <option value="已收" ${currentPayee === '已收' ? 'selected' : ''}>已收</option>
                 </select>
@@ -686,15 +734,13 @@
           tr.appendChild(tdRoom);
         }
 
-        // 當日總計
-        totalMonthRevenue += rowTotal;
+        branchMonthRevenue += rowTotal;
         const tdTotal = document.createElement('td');
         tdTotal.className = 'total-col';
         tdTotal.id = `total-${dateKey}`;
         tdTotal.innerText = rowTotal > 0 ? rowTotal.toLocaleString() : '0';
         tr.appendChild(tdTotal);
 
-        // 關房按鈕
         const tdAction = document.createElement('td');
         tdAction.className = 'action-col';
         tdAction.innerHTML = `<button class="btn-close-room" onclick="closeEmptyRooms('${dateKey}')">關房</button>`;
@@ -703,11 +749,10 @@
         tbody.appendChild(tr);
       }
 
-      document.getElementById('bookingGrandTotal').innerText = totalMonthRevenue.toLocaleString();
-      document.getElementById('sumPaid').innerText = payeeTotals['已收'].toLocaleString();
-      document.getElementById('sumUnpaid').innerText = payeeTotals['未收'].toLocaleString();
+      document.getElementById('bookingGrandTotal').innerText = branchMonthRevenue.toLocaleString();
+      document.getElementById('sumPaid').innerText = branchPayeeTotals['已收'].toLocaleString();
+      document.getElementById('sumUnpaid').innerText = branchPayeeTotals['未收'].toLocaleString();
 
-      syncMonthRevenueToAnnual(year, month, totalMonthRevenue);
       bindBookingInputs();
 
       const textareas = document.querySelectorAll('#bookingTableBody .input-info');
@@ -720,17 +765,18 @@
     }
 
     function closeEmptyRooms(dateKey) {
-      if (!confirm(`確定要將 ${dateKey} 所有的空房設定為「關房中」嗎？\n(已填寫名字的房間將不會被覆蓋)`)) return;
+      if (!confirm(`確定要將 ${dateKey} 本館所有的空房設定為「關房中」嗎？\n(已填寫名字的房間將不會被覆蓋)`)) return;
       
       const monthPickerVal = document.getElementById('bookingMonthPicker').value;
       if (!currentMonthBookings[dateKey]) currentMonthBookings[dateKey] = { month: monthPickerVal };
+      if (!currentMonthBookings[dateKey][currentBranch]) currentMonthBookings[dateKey][currentBranch] = {};
       
       let hasChanges = false;
-      const dataToSave = { month: monthPickerVal };
+      const dataToSave = currentMonthBookings[dateKey][currentBranch];
 
       for (let r = 1; r <= 5; r++) {
         const roomKey = `r${r}`;
-        const rData = currentMonthBookings[dateKey][roomKey] || { info: '', phone: '', price: '', payee: '未收' };
+        const rData = dataToSave[roomKey] || { info: '', phone: '', price: '', payee: '未收' };
         
         if ((rData.info || '').trim() === '') {
           rData.info = '關房中';
@@ -741,12 +787,10 @@
 
       if (hasChanges) {
         setSyncStatus('關房儲存中...', 'syncing');
-        db.collection('bookings').doc(dateKey).set(dataToSave, { merge: true })
-          .then(() => setSyncStatus('雲端已同步', 'synced'))
-          .catch(err => {
-            console.error(err);
-            alert('關房失敗: ' + err.message);
-          });
+        db.collection('bookings').doc(dateKey).set({
+          month: monthPickerVal,
+          [currentBranch]: dataToSave
+        }, { merge: true }).then(() => setSyncStatus('雲端已同步', 'synced'));
       }
     }
 
@@ -766,7 +810,6 @@
             e.target.classList.remove('payee-unpaid', 'payee-paid');
             e.target.classList.add(getPayeeClass(val));
           }
-
           if (field === 'info') {
             const td = e.target.closest('td');
             if (val.trim().length > 0) td.classList.add('booked-cell');
@@ -774,56 +817,81 @@
           }
 
           if (!currentMonthBookings[date]) currentMonthBookings[date] = { month: monthPickerVal };
-          if (!currentMonthBookings[date][room]) currentMonthBookings[date][room] = { info: '', phone: '', price: '', payee: '未收' };
-          currentMonthBookings[date][room][field] = val;
+          if (!currentMonthBookings[date][currentBranch]) currentMonthBookings[date][currentBranch] = {};
+          
+          for(let r=1; r<=5; r++){
+            if(!currentMonthBookings[date][currentBranch][`r${r}`]) {
+               currentMonthBookings[date][currentBranch][`r${r}`] = { info: '', phone: '', price: '', payee: '未收' };
+            }
+          }
+          
+          currentMonthBookings[date][currentBranch][room][field] = val;
 
+          // 重新計算當日畫面總額
           let rowSum = 0;
           for (let r = 1; r <= 5; r++) {
-            rowSum += parseFloat(currentMonthBookings[date][`r${r}`]?.price) || 0;
+            rowSum += parseFloat(currentMonthBookings[date][currentBranch][`r${r}`]?.price) || 0;
           }
           const tCell = document.getElementById(`total-${date}`);
           if (tCell) tCell.innerText = rowSum > 0 ? rowSum.toLocaleString() : '0';
 
-          calcAllSummaryTotals();
+          calcBranchSummaryTotals();
 
           setSyncStatus('儲存中...', 'syncing');
           clearTimeout(saveTimeout);
           saveTimeout = setTimeout(() => {
             db.collection('bookings').doc(date).set({
               month: monthPickerVal,
-              [room]: currentMonthBookings[date][room]
+              [currentBranch]: currentMonthBookings[date][currentBranch]
             }, { merge: true }).then(() => {
               setSyncStatus('雲端已同步', 'synced');
               const [y, m] = monthPickerVal.split('-').map(Number);
-              const grand = parseFloat(document.getElementById('bookingGrandTotal').innerText.replace(/,/g, '')) || 0;
-              syncMonthRevenueToAnnual(y, m, grand);
+              syncMonthRevenueToAnnual(y, m, getCombinedMonthlyRevenue());
             });
           }, 500);
         });
       });
     }
 
-    function calcAllSummaryTotals() {
-      let grand = 0;
+    // 計算本館 (目前 Tab) 的統計數據
+    function calcBranchSummaryTotals() {
+      let branchGrand = 0;
       let payees = { '已收': 0, '未收': 0 };
 
       for (let date in currentMonthBookings) {
+        let dayData = currentMonthBookings[date];
+        let bData = dayData[currentBranch] || {};
         for (let r = 1; r <= 5; r++) {
-          const rData = currentMonthBookings[date][`r${r}`];
+          const rData = bData[`r${r}`];
           if (rData) {
             const p = parseFloat(rData.price) || 0;
             const payee = (rData.payee === '已收') ? '已收' : '未收';
-            grand += p;
-            if (p > 0) {
-              payees[payee] += p;
-            }
+            branchGrand += p;
+            if (p > 0) payees[payee] += p;
           }
         }
       }
-
-      document.getElementById('bookingGrandTotal').innerText = grand.toLocaleString();
+      document.getElementById('bookingGrandTotal').innerText = branchGrand.toLocaleString();
       document.getElementById('sumPaid').innerText = payees['已收'].toLocaleString();
       document.getElementById('sumUnpaid').innerText = payees['未收'].toLocaleString();
+    }
+
+    // 取得三館全月份營收總和 (用以存入年度財報)
+    function getCombinedMonthlyRevenue() {
+      let total = 0;
+      for (let date in currentMonthBookings) {
+         let dayData = currentMonthBookings[date];
+         if (dayData.r1 && !dayData.b1) dayData.b1 = {r1: dayData.r1, r2: dayData.r2, r3: dayData.r3, r4: dayData.r4, r5: dayData.r5};
+         
+         ['b1', 'b2', 'b3'].forEach(b => {
+           if(dayData[b]) {
+             for(let r=1; r<=5; r++){
+               total += parseFloat(dayData[b][`r${r}`]?.price) || 0;
+             }
+           }
+         });
+      }
+      return total;
     }
 
     function syncMonthRevenueToAnnual(year, month, amount) {
@@ -833,7 +901,7 @@
     }
 
     // ==========================================
-    // 2. 營收紀錄 (年度總表 - 支出1~9 欄位縮窄)
+    // 2. 營收紀錄 
     // ==========================================
     async function loadRevenueYearData() {
       const year = document.getElementById('revenueYearPicker').value;
@@ -900,9 +968,7 @@
             if (dynamicExp > 0) curVal = dynamicExp;
             else if (manualSaved !== undefined) curVal = manualSaved;
           } else {
-            if (manualSaved !== undefined) {
-              curVal = manualSaved;
-            }
+            if (manualSaved !== undefined) curVal = manualSaved;
           }
 
           const numVal = parseFloat(curVal) || 0;
@@ -957,7 +1023,6 @@
     function updateFinanceCell(year, fieldKey, value) {
       const numVal = value === '' ? '' : parseFloat(value);
       annualData[fieldKey] = numVal;
-
       setSyncStatus('儲存中...', 'syncing');
       db.collection('annual_finance').doc(year).set({
         [fieldKey]: numVal
@@ -968,7 +1033,7 @@
     }
 
     // ==========================================
-    // 3. 每月支出明細 (小叮噹 / 大雄 / 技安)
+    // 3. 每月支出明細 
     // ==========================================
     function listenToMonthExpenses() {
       if (unsubscribeExpenses) unsubscribeExpenses();
@@ -1153,7 +1218,7 @@
     }
 
     // ==========================================
-    // 5. 匯出 Excel
+    // 5. 匯出 Excel (包含多館匯出分類)
     // ==========================================
     async function exportToExcel() {
       setSyncStatus('產生 Excel 中...', 'syncing');
@@ -1162,21 +1227,31 @@
         const wb = XLSX.utils.book_new();
 
         const bookingSnapshot = await db.collection('bookings').get();
-        const bookingRows = [["日期", "房號/名稱", "旅客資訊", "電話", "金額", "收款狀態"]];
+        // 加入"館別"欄位
+        const bookingRows = [["日期", "館別", "房號/名稱", "旅客資訊", "電話", "金額", "收款狀態"]];
 
         bookingSnapshot.forEach(doc => {
           const date = doc.id;
-          const data = doc.data();
-          for (let r = 1; r <= 5; r++) {
-            const roomKey = `r${r}`;
-            const roomName = roomNames[r - 1] || `房間 ${r}`;
-            const rData = data[roomKey];
-            if (rData && (rData.info || rData.price)) {
-              bookingRows.push([
-                date, roomName, rData.info || '', rData.phone || '', parseFloat(rData.price) || 0, rData.payee || '未收'
-              ]);
-            }
+          let data = doc.data();
+          
+          if (data.r1 && !data.b1) {
+            data.b1 = { r1: data.r1, r2: data.r2, r3: data.r3, r4: data.r4, r5: data.r5 };
           }
+
+          ['b1', 'b2', 'b3'].forEach(b => {
+            if (data[b]) {
+              for (let r = 1; r <= 5; r++) {
+                const roomKey = `r${r}`;
+                const roomName = roomNames[b][r - 1] || `房間 ${r}`;
+                const rData = data[b][roomKey];
+                if (rData && (rData.info || rData.price)) {
+                  bookingRows.push([
+                    date, branchTitles[b], roomName, rData.info || '', rData.phone || '', parseFloat(rData.price) || 0, rData.payee || '未收'
+                  ]);
+                }
+              }
+            }
+          });
         });
         const wsBookings = XLSX.utils.aoa_to_sheet(bookingRows);
         XLSX.utils.book_append_sheet(wb, wsBookings, "訂房明細");
