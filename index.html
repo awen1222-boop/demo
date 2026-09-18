@@ -171,6 +171,12 @@
     .holiday { background-color: #fee2e2 !important; border-left: 4px solid #ef4444 !important; }
     .holiday-tag { display: inline-block; font-size: 11px; color: #b91c1c; font-weight: bold; background: #fecaca; padding: 2px 5px; border-radius: 4px; margin-top: 3px; }
 
+    /* 當天欄位標記 (黃色醒目底色) */
+    .today-row > td { background-color: #fef08a !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.04) !important; }
+    .today-row .booked-cell { background-color: #fef08a !important; box-shadow: inset 0 0 0 2px #ef4444 !important; }
+    .today-row input, .today-row textarea, .today-row select { background-color: #fffbeb !important; }
+    .today-row .total-col { background-color: #fef08a !important; }
+
     /* 房型顏色區分設計 */
     .room-col { min-width: 140px; vertical-align: top; position: relative; transition: all 0.2s; }
     .room-double-th { background-color: #e0f2fe !important; } 
@@ -214,11 +220,20 @@
     }
     .btn-close-room:hover { background: #334155; }
 
-    /* 營收表特定樣式 */
+    /* 營收總表特定樣式 (縮窄各別支出欄位，不大於總支出與結餘) */
     .revenue-table th { background-color: #dbeafe !important; white-space: nowrap; }
     .revenue-table .freeze-left { background-color: #f1f5f9; }
+    .revenue-table .th-exp-col, .revenue-table .td-exp-col {
+      width: 72px !important;
+      max-width: 75px !important;
+      padding: 3px 2px !important;
+    }
+    .revenue-table .th-major-col, .revenue-table .td-major-col {
+      width: 95px !important;
+      min-width: 90px !important;
+    }
     .month-badge { background-color: #22c55e; color: white; font-weight: bold; padding: 3px 6px; border-radius: 3px; display: inline-block; }
-    .table-input { width: 100%; border: 1px solid transparent; padding: 4px; text-align: right; box-sizing: border-box; font-size: 13.5px; background: transparent; }
+    .table-input { width: 100%; border: 1px solid transparent; padding: 4px 2px; text-align: right; box-sizing: border-box; font-size: 13px; background: transparent; }
     .table-input:hover { border-color: #cbd5e1; background: #fff; }
     .table-input:focus { border-color: #2563eb; background: #fff; outline: none; }
     .cell-surplus { font-weight: bold; color: #1e3a8a; }
@@ -263,7 +278,10 @@
   <div id="tab-bookings" class="tab-content active">
     <div class="controls">
       <label>切換月份：<input type="month" id="bookingMonthPicker" style="width:140px;"></label>
-      <button onclick="exportToExcel()">📊 匯出 Excel 報表</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button onclick="exportToExcel()">📊 匯出 Excel 報表</button>
+        <span style="font-size: 13px; color: #2563eb; font-weight: 600;">(可設定每日備份)</span>
+      </div>
     </div>
 
     <!-- 範本專用收款統計：已收 (藍色) / 未收 (白色) -->
@@ -302,7 +320,7 @@
     </div>
   </div>
 
-  <!-- 分頁 2: 營收紀錄 (改為支出1~支出9) -->
+  <!-- 分頁 2: 營收紀錄 (欄位縮窄優化) -->
   <div id="tab-revenue" class="tab-content">
     <div class="controls">
       <label>年度選擇：
@@ -322,19 +340,19 @@
       <table class="revenue-table">
         <thead>
           <tr>
-            <th class="freeze-left" id="revYearHeader" style="width: 60px;">2026</th>
-            <th>營收</th>
-            <th>支出1</th>
-            <th>支出2</th>
-            <th>支出3</th>
-            <th>支出4</th>
-            <th>支出5</th>
-            <th>支出6</th>
-            <th>支出7</th>
-            <th style="background-color:#fef08a !important;">支出8</th>
-            <th>支出9</th>
-            <th style="background-color: #e0e7ff !important;">總支出</th>
-            <th style="background-color: #fef08a !important;">結餘</th>
+            <th class="freeze-left" id="revYearHeader" style="width: 55px;">2026</th>
+            <th class="th-major-col">營收</th>
+            <th class="th-exp-col">支出1</th>
+            <th class="th-exp-col">支出2</th>
+            <th class="th-exp-col">支出3</th>
+            <th class="th-exp-col">支出4</th>
+            <th class="th-exp-col">支出5</th>
+            <th class="th-exp-col">支出6</th>
+            <th class="th-exp-col">支出7</th>
+            <th class="th-exp-col" style="background-color:#fef08a !important;">支出8</th>
+            <th class="th-exp-col">支出9</th>
+            <th class="th-major-col" style="background-color: #e0e7ff !important;">總支出</th>
+            <th class="th-major-col" style="background-color: #fef08a !important;">結餘</th>
           </tr>
         </thead>
         <tbody id="revenueTableBody"></tbody>
@@ -441,22 +459,17 @@
 
   <script>
     // ==========================================
-    // 國定假日清單 (完整涵蓋 2025、2026、2027)
+    // 國定假日清單 (涵蓋 2025、2026、2027)
     // ==========================================
     const TAIWAN_HOLIDAYS = {
-      // 2025
       "2025-01-01": "元旦", "2025-01-27": "春節調整", "2025-01-28": "除夕", "2025-01-29": "春節", "2025-01-30": "初二", "2025-01-31": "初三",
       "2025-02-28": "和平紀念日", "2025-04-03": "兒童節補假", "2025-04-04": "兒童清明", "2025-05-01": "勞動節",
       "2025-05-30": "端午補假", "2025-05-31": "端午節", "2025-10-06": "中秋補假", "2025-10-10": "國慶日",
-
-      // 2026
       "2026-01-01": "元旦", "2026-01-02": "元旦連假",
       "2026-02-16": "除夕", "2026-02-17": "初一", "2026-02-18": "初二", "2026-02-19": "初三", "2026-02-20": "初四", "2026-02-23": "春節補假",
       "2026-02-27": "和平補假", "2026-02-28": "和平紀念日", 
       "2026-04-03": "兒童節", "2026-04-04": "清明節", "2026-04-06": "清明補假",
       "2026-05-01": "勞動節", "2026-06-19": "端午節", "2026-09-25": "中秋節", "2026-10-09": "國慶連假", "2026-10-10": "國慶日",
-
-      // 2027
       "2027-01-01": "元旦", 
       "2027-02-05": "除夕", "2027-02-06": "春節", "2027-02-07": "初二", "2027-02-08": "初三", "2027-02-09": "初四",
       "2027-02-26": "和平補假", "2027-02-28": "和平紀念日", 
@@ -465,7 +478,7 @@
     };
 
     // ==========================================
-    // Firebase 配置 (已替換為新專案 fir-14fa0 金鑰)
+    // Firebase 配置 (展示專用專案 fir-14fa0)
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyDMLKFDzpoQ3J1llHLEgEfagfM6SsJiV2I",
@@ -479,7 +492,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 範本通用支出項目 (支出1 ~ 支出9)
     const EXP_CATEGORIES = ['支出1', '支出2', '支出3', '支出4', '支出5', '支出6', '支出7', '支出8', '支出9'];
 
     let roomNames = ['202 雙人房', '302 雙人房', '201 四人房', '301 四人房', '401 四人房'];
@@ -496,6 +508,9 @@
     const curYear = today.getFullYear();
     const curMonthStr = `${curYear}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     
+    // 計算「今天」的日期字串 (YYYY-MM-DD)
+    const localTodayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     document.getElementById('bookingMonthPicker').value = curMonthStr;
     document.getElementById('expenseMonthPicker').value = curMonthStr;
     document.getElementById('expDate').value = today.toISOString().slice(0, 10);
@@ -539,7 +554,6 @@
       }
     });
 
-    // 取得收款狀態樣式：已收為藍色，未收為白色
     function getPayeeClass(payeeName) {
       if (payeeName === '已收') return 'payee-paid';
       return 'payee-unpaid';
@@ -606,6 +620,11 @@
 
         let rowTotal = 0;
         const tr = document.createElement('tr');
+
+        // 當天欄位標記 (黃色高亮)
+        if (dateKey === localTodayString) {
+          tr.classList.add('today-row');
+        }
 
         // 日期欄
         const tdDate = document.createElement('td');
@@ -700,7 +719,6 @@
       }
     }
 
-    // 關閉當天剩餘空房
     function closeEmptyRooms(dateKey) {
       if (!confirm(`確定要將 ${dateKey} 所有的空房設定為「關房中」嗎？\n(已填寫名字的房間將不會被覆蓋)`)) return;
       
@@ -815,7 +833,7 @@
     }
 
     // ==========================================
-    // 2. 營收紀錄 (年度總表 - 支出1~9)
+    // 2. 營收紀錄 (年度總表 - 支出1~9 欄位縮窄)
     // ==========================================
     async function loadRevenueYearData() {
       const year = document.getElementById('revenueYearPicker').value;
@@ -864,6 +882,7 @@
         colTotals.revenue += revVal;
 
         const tdRev = document.createElement('td');
+        tdRev.className = 'td-major-col';
         tdRev.innerHTML = `
           <input type="number" class="table-input" style="font-weight:bold; color:#047857;"
                  value="${revVal > 0 ? revVal : ''}" placeholder="0" 
@@ -872,7 +891,7 @@
         tr.appendChild(tdRev);
 
         let monthTotalExp = 0;
-        EXP_CATEGORIES.forEach((cat, idx) => {
+        EXP_CATEGORIES.forEach((cat) => {
           let curVal = '';
           const manualSaved = annualData[`m${m}_${cat}`];
 
@@ -891,6 +910,7 @@
           colTotals[cat] += numVal;
 
           const tdCat = document.createElement('td');
+          tdCat.className = 'td-exp-col';
           const isCalculated = (cat === '支出8' && expenseMonthlyTotals[m] > 0);
           tdCat.innerHTML = `
             <input type="number" class="table-input" style="${isCalculated ? 'color:#b91c1c; font-weight:bold;' : ''}"
@@ -902,6 +922,7 @@
 
         colTotals.totalExp += monthTotalExp;
         const tdExp = document.createElement('td');
+        tdExp.className = 'td-major-col';
         tdExp.style.textAlign = 'right';
         tdExp.style.fontWeight = 'bold';
         tdExp.innerText = monthTotalExp > 0 ? monthTotalExp.toLocaleString() : '0';
@@ -910,7 +931,7 @@
         const surplus = revVal - monthTotalExp;
         colTotals.surplus += surplus;
         const tdSurplus = document.createElement('td');
-        tdSurplus.className = `cell-surplus ${surplus < 0 ? 'negative' : ''}`;
+        tdSurplus.className = `td-major-col cell-surplus ${surplus < 0 ? 'negative' : ''}`;
         tdSurplus.style.textAlign = 'right';
         tdSurplus.innerText = surplus.toLocaleString(); 
         tr.appendChild(tdSurplus);
@@ -921,14 +942,14 @@
       const summaryRow = document.getElementById('revenueSummaryRow');
       let html = `
         <td class="freeze-left" style="background:#e2e8f0;">總計</td>
-        <td style="text-align:right; font-size:15px; color:#047857;">${colTotals.revenue.toLocaleString()}</td>
+        <td class="td-major-col" style="text-align:right; font-size:14.5px; color:#047857;">${colTotals.revenue.toLocaleString()}</td>
       `;
       EXP_CATEGORIES.forEach(cat => {
-        html += `<td style="text-align:right; color:#b91c1c;">${colTotals[cat] > 0 ? colTotals[cat].toLocaleString() : '0'}</td>`;
+        html += `<td class="td-exp-col" style="text-align:right; color:#b91c1c; font-size:12.5px;">${colTotals[cat] > 0 ? colTotals[cat].toLocaleString() : '0'}</td>`;
       });
       html += `
-        <td style="text-align:right; color:#b91c1c; font-size:15px;">${colTotals.totalExp.toLocaleString()}</td>
-        <td style="text-align:right; color:${colTotals.surplus < 0 ? '#dc2626' : '#1e3a8a'}; font-size:15px;">${colTotals.surplus.toLocaleString()}</td>
+        <td class="td-major-col" style="text-align:right; color:#b91c1c; font-size:14.5px;">${colTotals.totalExp.toLocaleString()}</td>
+        <td class="td-major-col" style="text-align:right; color:${colTotals.surplus < 0 ? '#dc2626' : '#1e3a8a'}; font-size:14.5px;">${colTotals.surplus.toLocaleString()}</td>
       `;
       summaryRow.innerHTML = html;
     }
