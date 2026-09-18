@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0, user-scalable=yes">
-  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.08.Demo</title>
+  <title>民宿預約與財務管理系統 (範本) (可客製) V.260918.09.Demo</title>
   
   <!-- 載入 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
@@ -245,18 +245,11 @@
     }
     .btn-close-room:hover { background: #334155; }
 
-    /* 營收總表特定樣式 (縮窄各別支出欄位) */
+    /* 營收總表特定樣式 */
     .revenue-table th { background-color: #dbeafe !important; white-space: nowrap; }
     .revenue-table .freeze-left { background-color: #f1f5f9; }
-    .revenue-table .th-exp-col, .revenue-table .td-exp-col {
-      width: 72px !important;
-      max-width: 75px !important;
-      padding: 3px 2px !important;
-    }
-    .revenue-table .th-major-col, .revenue-table .td-major-col {
-      width: 95px !important;
-      min-width: 90px !important;
-    }
+    .revenue-table .th-exp-col, .revenue-table .td-exp-col { width: 72px !important; max-width: 75px !important; padding: 3px 2px !important; }
+    .revenue-table .th-major-col, .revenue-table .td-major-col { width: 95px !important; min-width: 90px !important; }
     .month-badge { background-color: #22c55e; color: white; font-weight: bold; padding: 3px 6px; border-radius: 3px; display: inline-block; }
     .table-input { width: 100%; border: 1px solid transparent; padding: 4px 2px; text-align: right; box-sizing: border-box; font-size: 13px; background: transparent; }
     .table-input[readonly]:focus { outline: none; border-color: transparent; }
@@ -269,68 +262,35 @@
 
     .common-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: white; padding: 12px 16px; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 15px; }
 
-    /* 教學分頁專用樣式 */
-    .tutorial-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 10px;
-    }
-    .tutorial-card {
-      background: white;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      margin-bottom: 20px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .tutorial-header {
-      background: #f1f5f9;
-      padding: 12px 16px;
-      font-size: 16px;
-      font-weight: bold;
-      color: #1e293b;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tutorial-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    @media (min-width: 768px) {
+    /* =========================================
+       教學分頁與微縮模擬圖 (Mockups) 專用樣式
+       ========================================= */
+    .tutorial-container { max-width: 1000px; margin: 0 auto; padding: 10px; }
+    .tutorial-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .tutorial-header { background: #f1f5f9; padding: 12px 16px; font-size: 16px; font-weight: bold; color: #1e293b; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; }
+    .tutorial-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    @media (min-width: 800px) {
       .tutorial-body { flex-direction: row; }
-      .tutorial-text { flex: 1; }
-      .tutorial-img { flex: 1; display: flex; justify-content: center; align-items: center; }
+      .tutorial-text { flex: 1.1; }
+      .tutorial-img { flex: 0.9; display: flex; justify-content: center; align-items: center; background: #f8fafc; border-radius: 8px; padding: 12px; }
     }
-    .tutorial-text ul {
-      margin: 0;
-      padding-left: 20px;
-      color: #334155;
-      line-height: 1.6;
-    }
+    .tutorial-text ul { margin: 0; padding-left: 20px; color: #334155; line-height: 1.6; }
     .tutorial-text li { margin-bottom: 8px; }
-    .img-placeholder {
-      background: #e2e8f0;
-      border: 2px dashed #94a3b8;
-      border-radius: 6px;
-      width: 100%;
-      height: 180px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #64748b;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .img-placeholder img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 6px;
-    }
+    
+    /* 模擬畫面外框與元件 */
+    .mockup-container { background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; width: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 11px; user-select: none; pointer-events: none; }
+    .mockup-tabs { display: flex; gap: 4px; margin-bottom: 6px; }
+    .mockup-tab { background: #e2e8f0; padding: 3px 8px; border-radius: 12px; color: #475569; font-weight: bold; font-size: 10px; }
+    .mockup-tab.active { background: #059669; color: white; }
+    .mockup-table { width: 100%; border-collapse: collapse; text-align: center; }
+    .mockup-table th, .mockup-table td { border: 1px solid #e2e8f0; padding: 4px; }
+    .mockup-table th { background: #f1f5f9; color: #334155; font-size: 10.5px; }
+    .mockup-row-today td { background-color: #fef08a !important; }
+    .mockup-cell-booked { border: 2px solid #ef4444 !important; background: #fff1f2; text-align: left; padding: 4px !important; border-radius: 2px; }
+    .mockup-btn { background: #475569; color: white; border-radius: 3px; padding: 3px 6px; font-size: 10px; display: inline-block;}
+    .mockup-input { border: 1px solid #cbd5e1; border-radius: 3px; padding: 3px 6px; background: white; color: #64748b; font-size: 11px; }
+    .mockup-readonly { background: #f8fafc; color: #94a3b8; }
+    .mockup-excel-th { background: #16a34a !important; color: white !important; }
 
     @media (max-width: 650px) {
       .common-form { flex-direction: column; align-items: stretch; }
@@ -347,12 +307,12 @@
   <div class="top-bar">
     <div class="title">
       🏡 民宿預約與財務管理系統 (範本)
-      <span class="version-badge">V.260918.08.Demo</span>
+      <span class="version-badge">V.260918.09.Demo</span>
       <span id="syncStatus" class="status-badge">連線中...</span>
     </div>
   </div>
 
-  <!-- 分頁選單 (新增系統教學) -->
+  <!-- 分頁選單 (包含系統教學) -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('tab-bookings')">📅 訂房紀錄</button>
     <button class="tab-btn" onclick="switchTab('tab-revenue')">📊 營收總表</button>
@@ -555,60 +515,121 @@
     </div>
   </div>
 
-  <!-- 分頁 5: 系統教學 (圖文版) -->
+  <!-- 分頁 5: 系統教學 (內建微縮模擬圖) -->
   <div id="tab-tutorial" class="tab-content">
     <div class="tutorial-container">
       
+      <!-- 教學卡片 1 -->
       <div class="tutorial-card">
         <div class="tutorial-header">📅 訂房紀錄與多館別管理</div>
         <div class="tutorial-body">
           <div class="tutorial-text">
             <ul>
-              <li><strong>防呆視覺化：</strong>當天的日期整行會自動標記為<span style="background:#fef08a; padding:0 4px; border-radius:3px;">醒目黃色</span>，客名填寫後該格會顯示紅框，方便前台秒速找房。</li>
+              <li><strong>防呆視覺化：</strong>當天的日期整行會自動標記為<span style="background:#fef08a; padding:0 4px; border-radius:3px; color:#854d0e;">醒目黃色</span>，客名填寫後該格會顯示紅框，方便前台秒速找房。</li>
               <li><strong>多館獨立操作：</strong>點選上方「一館 / 二館 / 三館」按鈕，房況與表頭名稱會瞬間切換。點擊表頭的「✏️」即可自訂該館專屬房型名稱。</li>
               <li><strong>一鍵關房：</strong>點擊右側的「關房」按鈕，即可將當日該館尚未售出的空房全部填上「關房中」。</li>
               <li><strong>收款統計：</strong>左上方會即時幫您算出目前畫面中，該館當月「已收」與「未收」的總金額。</li>
             </ul>
           </div>
           <div class="tutorial-img">
-            <!-- 若您未來有截圖，可將下方文字替換為：<img src="您的圖片網址.jpg"> -->
-            <div class="img-placeholder">📸 預留截圖位置 (訂房紀錄介面)</div>
+            <!-- 模擬截圖 1: 訂房紀錄 -->
+            <div class="mockup-container">
+              <div class="mockup-tabs">
+                <div class="mockup-tab active">🏠 民宿一館</div>
+                <div class="mockup-tab">🏠 民宿二館</div>
+              </div>
+              <table class="mockup-table">
+                <tr><th>日期 / 星期</th><th>202 雙人房 ✏️</th><th>302 雙人房 ✏️</th><th>操作</th></tr>
+                <tr class="mockup-row-today">
+                  <td style="font-size:10px;">9月18日<br>今日</td>
+                  <td class="mockup-cell-booked" style="color:#333;"><strong>陳先生</strong><br><span style="color:#2563eb; font-size:10px;">已收 2500</span></td>
+                  <td><span style="color:#94a3b8;">(空房)</span></td>
+                  <td><span class="mockup-btn">關房</span></td>
+                </tr>
+                <tr>
+                  <td style="font-size:10px;">9月19日<br>明日</td>
+                  <td><span style="color:#94a3b8;">(空房)</span></td>
+                  <td><span style="color:#94a3b8;">(空房)</span></td>
+                  <td><span class="mockup-btn">關房</span></td>
+                </tr>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- 教學卡片 2 -->
       <div class="tutorial-card">
         <div class="tutorial-header">📊 營收總表 (100% 唯讀防呆)</div>
         <div class="tutorial-body">
           <div class="tutorial-text">
             <ul>
-              <li><strong>全自動結算：</strong>為了確保帳目精準，本分頁設定為「完全唯讀」。所有數字皆由系統後台 24 小時自動抓取計算。</li>
-              <li><strong>獨立財報：</strong>點選「一館財報 / 二館財報」，系統會分別為您調出該館專屬的 1~12 月營收與支出。</li>
-              <li><strong>結餘公式：</strong>每月的「結餘」= 本館總營收 (抓取自訂房紀錄) 扣除 本館總支出 (抓取自支出明細)。</li>
+              <li><strong>全自動結算：</strong>為了確保帳目精準，本分頁設定為「完全唯讀」。所有數字皆由系統後台 24 小時自動抓取計算，無法手動竄改。</li>
+              <li><strong>獨立財報：</strong>點選「一館財報 / 二館財報 / 三館財報」，系統會分別為您調出該館專屬的 1~12 月各項營收與支出。</li>
+              <li><strong>結餘公式：</strong>每月的「結餘」= 本館總營收 (抓自訂單) 扣除 本館總支出 (抓自支出明細)。</li>
             </ul>
           </div>
           <div class="tutorial-img">
-            <div class="img-placeholder">📸 預留截圖位置 (營收總表介面)</div>
+            <!-- 模擬截圖 2: 營收總表 -->
+            <div class="mockup-container">
+              <div class="mockup-tabs">
+                <div class="mockup-tab active">🏠 一館財報</div>
+                <div class="mockup-tab">🏠 二館財報</div>
+              </div>
+              <table class="mockup-table" style="font-size:10.5px;">
+                <tr><th>2026</th><th>一館營收</th><th>支出1</th><th>總支出</th><th style="background:#fef08a;">結餘</th></tr>
+                <tr>
+                  <td style="background:#22c55e; color:white; font-weight:bold; border-radius:2px;">9月</td>
+                  <td><div class="mockup-input mockup-readonly" style="color:#047857; font-weight:bold; text-align:right;">15,000</div></td>
+                  <td><div class="mockup-input mockup-readonly" style="color:#b91c1c; text-align:right;">2,000</div></td>
+                  <td style="font-weight:bold; text-align:right;">2,000</td>
+                  <td style="color:#1e3a8a; font-weight:bold; text-align:right;">13,000</td>
+                </tr>
+                <tr>
+                  <td style="background:#22c55e; color:white; font-weight:bold; border-radius:2px;">10月</td>
+                  <td><div class="mockup-input mockup-readonly" style="text-align:right;">0</div></td>
+                  <td><div class="mockup-input mockup-readonly" style="text-align:right;">-</div></td>
+                  <td style="font-weight:bold; text-align:right;">0</td>
+                  <td style="color:#1e3a8a; font-weight:bold; text-align:right;">0</td>
+                </tr>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- 教學卡片 3 -->
       <div class="tutorial-card">
         <div class="tutorial-header">💸 支出明細與自動扣帳</div>
         <div class="tutorial-body">
           <div class="tutorial-text">
             <ul>
-              <li><strong>指定館別支出：</strong>新增支出時，請在下拉選單選擇「一館、二館或三館」。這筆錢將會自動同步並扣除該館在「營收總表」內的營利。</li>
+              <li><strong>指定館別支出：</strong>新增支出時，請在下拉選單選擇「一館、二館或三館」。這筆錢將會自動同步並扣除該館在「營收總表」內的帳目。</li>
               <li><strong>九大支出分類：</strong>提供「支出1 ~ 支出9」供您自訂。</li>
               <li><strong>底部獨立統計：</strong>列表最下方會自動將當月「一館、二館、三館」的總花費分別加總，對帳一目了然。</li>
             </ul>
           </div>
           <div class="tutorial-img">
-             <div class="img-placeholder">📸 預留截圖位置 (支出明細介面)</div>
+            <!-- 模擬截圖 3: 支出明細 -->
+            <div class="mockup-container">
+              <div style="display:flex; gap:4px; margin-bottom:8px; align-items:center;">
+                <div class="mockup-input" style="color:#1e40af; font-weight:bold;">一館 ▼</div>
+                <div class="mockup-input">支出1 ▼</div>
+                <div class="mockup-input" style="width:40px; text-align:right;">500</div>
+                <div class="mockup-btn" style="background:#2563eb; padding:4px 8px;">送出儲存</div>
+              </div>
+              <table class="mockup-table">
+                <tr><th>支出日期</th><th>館別</th><th>分類項目</th><th>金額</th></tr>
+                <tr><td>2026-09-18</td><td style="color:#1e40af; font-weight:bold;">一館</td><td>支出1</td><td style="color:#b91c1c; font-weight:bold; text-align:right;">500</td></tr>
+                <tr><td>2026-09-17</td><td style="color:#1e40af; font-weight:bold;">二館</td><td>支出3</td><td style="color:#b91c1c; font-weight:bold; text-align:right;">1,200</td></tr>
+              </table>
+              <div style="margin-top:6px; background:#f1f5f9; padding:4px; border-radius:3px; text-align:right; font-weight:bold;">當月所有支出總計 <span style="color:#b91c1c;">1,700</span></div>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- 教學卡片 4 -->
       <div class="tutorial-card">
         <div class="tutorial-header">💾 資料匯出與每日自動備份</div>
         <div class="tutorial-body">
@@ -620,7 +641,19 @@
             </ul>
           </div>
           <div class="tutorial-img">
-            <div class="img-placeholder">📸 預留截圖位置 (Excel 報表範例)</div>
+            <!-- 模擬截圖 4: 匯出與 Excel -->
+            <div class="mockup-container">
+              <div style="margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                <div class="mockup-btn" style="background:#f8fafc; color:#333; border:1px solid #cbd5e1; font-size:11px;">📊 匯出 Excel 報表</div>
+                <span style="color:#2563eb; font-weight:bold; font-size:11px;">(可設定每日備份)</span>
+              </div>
+              <table class="mockup-table" style="border: 2px solid #16a34a;">
+                <tr><th class="mockup-excel-th">日期</th><th class="mockup-excel-th">館別</th><th class="mockup-excel-th">房號/名稱</th><th class="mockup-excel-th">金額</th></tr>
+                <tr><td>2026-09-18</td><td>一館</td><td>202 雙人房</td><td style="text-align:right;">2500</td></tr>
+                <tr><td>2026-09-18</td><td>一館</td><td>302 雙人房</td><td style="text-align:right;">1800</td></tr>
+                <tr><td>2026-09-18</td><td>二館</td><td>201 四人房</td><td style="text-align:right;">3200</td></tr>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -1125,6 +1158,7 @@
         const revVal = parseFloat(annualDataObj[`${currentRevBranch}_m${m}_revenue`]) || 0;
         colTotals.revenue += revVal;
 
+        // ★ 營收欄位 - 強制唯讀
         const tdRev = document.createElement('td');
         tdRev.className = 'td-major-col';
         tdRev.innerHTML = `
@@ -1133,6 +1167,7 @@
         `;
         tr.appendChild(tdRev);
 
+        // ★ 支出 1~9 欄位 - 全部從支出明細表自動抓取，強制唯讀
         let monthTotalExp = 0;
         EXP_CATEGORIES.forEach((cat) => {
           let curVal = '';
@@ -1430,7 +1465,7 @@
         const wsAccounts = XLSX.utils.aoa_to_sheet(accRows);
         XLSX.utils.book_append_sheet(wb, wsAccounts, "設備帳密");
 
-        const fileName = `民宿管理資料_V260918.08.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const fileName = `民宿管理資料_V260918.09.Demo_${new Date().toISOString().slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, fileName);
         setSyncStatus('雲端已同步', 'synced');
       } catch (err) {
